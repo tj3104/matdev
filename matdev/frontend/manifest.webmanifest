@@ -1,0 +1,11 @@
+{
+  "name": "MatDev",
+  "short_name": "MatDev",
+  "description": "相談しながら材料計算を進める",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#04080c",
+  "theme_color": "#04080c",
+  "lang": "ja",
+  "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+}

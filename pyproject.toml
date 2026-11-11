@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matdev"
+version = "0.1.0"
+description = "声で相談して材料計算を進めるジャービス型の開発環境 (今は文字版)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["anthropic>=2.3", "openai", "mcp>=2.3", "fastapi", "uvicorn[standard]", "jsonschema", "python-multipart",
+                "faster-whisper", "av<17"]   # av 17 以降は faster-whisper 1.2 の音声の読み込みと合わない
+
+[project.optional-dependencies]
+test = ["pytest", "httpx"]
+
+[tool.setuptools]
+packages = ["matdev"]
+
+[tool.setuptools.package-data]
+matdev = ["frontend/*", "frontend/vendor/*"]   # vendor: three.js 0.170.0 (MIT、外部から読み込まないため同梱)

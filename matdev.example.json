@@ -1,0 +1,72 @@
+{
+  "llm": {
+    "provider": "anthropic",
+    "model": "claude-opus-5-5"
+  },
+  "mcpServers": {
+    "matsim": {
+      "command": "$MATSIM_VENV/bin/matsimapi",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "MATSIM_DATA_DIR": "$MATSIM_DATA_DIR"
+      },
+      "matdev": {
+        "guide": "GPUMD・SevenNet で MD・構造モデリング・解析を動かす。GPU は 1 枚で、ジョブは順番に実行される。汎用ポテンシャルの結果は参考値として扱う",
+        "estimate": {
+          "tool": "submit_calculation",
+          "preview": "preview_calculation",
+          "seconds_field": "estimated_seconds",
+          "summary": [
+            "formula",
+            "n_atoms",
+            "total_steps"
+          ]
+        },
+        "jobs": {
+          "ids": "jobs[].id",
+          "status": "get_job",
+          "id_arg": "job_id",
+          "status_field": "status",
+          "message_field": "message",
+          "done": [
+            "done",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "confirm": [
+          "cancel_job",
+          "add_structure_file"
+        ],
+        "allow": [
+          "add_sample_structure",
+          "import_mp_structure",
+          "save_model",
+          "save_final_structure",
+          "submit_analysis"
+        ],
+        "view": {
+          "list": {
+            "tool": "get_job_results",
+            "args": {
+              "job_id": "{job_id}"
+            },
+            "items": "datasets[]"
+          },
+          "data": {
+            "tool": "get_job_dataset",
+            "args": {
+              "job_id": "{job_id}",
+              "key": "{key}",
+              "max_rows": 400
+            },
+            "columns": "data"
+          },
+          "link": "$MATDEV_MATSIM_URL/#/jobs/{job_id}"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04080c">
+<meta name="color-scheme" content="dark light">
+<title>MatDev</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<script src="theme.js"></script>
+</head>
+<body>
+<main id="auth" class="auth" hidden>
+  <form id="auth-form" class="hud">
+    <div class="brand"><span class="reactor" aria-hidden="true"></span><h1>MatDev</h1></div>
+    <p id="auth-hint"></p>
+    <label for="username">ユーザー名</label>
+    <input id="username" autocomplete="username" required minlength="3" maxlength="32">
+    <label for="password">パスワード (10 文字以上)</label>
+    <input id="password" type="password" autocomplete="current-password" required minlength="10">
+    <p id="auth-error" class="error" role="alert"></p>
+    <button id="auth-submit" type="submit" class="primary"></button>
+  </form>
+</main>
+
+<div id="app" class="app" hidden>
+  <aside id="side" class="side drawer-left">
+    <div class="brand">
+      <span id="reactor" class="reactor" aria-hidden="true"></span>
+      <div><b>MatDev</b><small id="assistant-label">材料開発アシスタント</small></div>
+    </div>
+    <button id="new-chat" type="button" class="primary">＋ 新しい会話</button>
+    <p class="caption">会話</p>
+    <nav id="chats" aria-label="会話の一覧"></nav>
+    <div class="side-foot">
+      <p class="caption">接続</p>
+      <ul id="systems" class="systems"></ul>
+      <div class="meter" aria-hidden="true"><span id="usage-bar"></span></div>
+      <div id="usage" class="usage"></div>
+      <div class="theme-pick">出力先 <b id="work-name" class="work-name">未設定</b>
+        <button id="work-choose" type="button" class="quiet small">切り替え</button></div>
+      <label class="theme-pick">名前
+        <input id="assistant-name" maxlength="20" autocomplete="off" aria-label="アシスタントの名前">
+      </label>
+      <label class="theme-pick">表示
+        <select id="theme">
+          <option value="dark">暗い</option>
+          <option value="light">明るい</option>
+          <option value="auto">端末に合わせる</option>
+        </select>
+      </label>
+      <button id="logout" type="button" class="quiet">ログアウト</button>
+    </div>
+  </aside>
+
+  <section class="chat">
+    <header class="top">
+      <button id="menu" type="button" class="quiet icon" aria-label="会話の一覧を開く">☰</button>
+      <h2 id="title">MatDev</h2>
+      <button id="work-chip" type="button" class="quiet work-chip" title="この会話の出力先">出力先なし</button>
+      <span id="busy" class="busy" hidden>処理中</span>
+      <button id="speak-toggle" type="button" class="quiet speak-toggle" aria-pressed="false"><span class="icon">🔈</span> <span class="label">読み上げなし</span></button>
+      <button id="open-molecules" type="button" class="quiet" hidden>取り込む</button>
+      <button id="open-tools" type="button" class="quiet">道具</button>
+      <button id="open-space" type="button" class="quiet">空間</button>
+      <button id="open-panel" type="button" class="quiet panel-toggle">資料</button>
+    </header>
+    <div id="banner" class="banner" hidden></div>
+    <div id="log" class="log" aria-live="polite"></div>
+    <form id="composer" class="composer">
+      <textarea id="input" rows="1" maxlength="20000" placeholder="何を調べますか" aria-label="メッセージ"></textarea>
+      <button id="mic" type="button" class="mic" aria-pressed="false" hidden>🎙 声</button>
+      <button id="send" type="submit" class="primary">送信</button>
+      <button id="stop" type="button" class="danger" hidden>止める</button>
+    </form>
+  </section>
+
+  <aside id="panel" class="panel drawer-right" aria-label="資料">
+    <div class="panel-head">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="chat" aria-selected="true">この会話</button>
+        <button type="button" role="tab" data-tab="all" aria-selected="false">これまで</button>
+        <button type="button" role="tab" data-tab="notes" aria-selected="false">ノート</button>
+        <button type="button" role="tab" data-tab="work" aria-selected="false">作業</button>
+      </div>
+      <button id="close-panel" type="button" class="quiet icon panel-toggle" aria-label="資料を閉じる">✕</button>
+    </div>
+    <input id="panel-query" type="search" placeholder="探す (道具・ジョブ・会話の題)" aria-label="資料を探す" hidden>
+    <div id="panel-body" class="panel-body"></div>
+  </aside>
+  <div id="scrim" class="scrim" hidden></div>
+  <section id="space" class="space" hidden aria-label="空間">
+    <canvas id="space-canvas"></canvas>
+    <div class="space-bar">
+      <button id="close-space" type="button" class="quiet">✕ 閉じる</button>
+      <span class="space-hint">ドラッグで見回す・ピンチやホイールで寄る・パネルを押して操作</span>
+      <button id="space-mic" type="button" class="mic">🎙 声</button>
+      <button id="enter-xr" type="button" class="primary" hidden>XR で入る</button>
+    </div>
+  </section>
+  <dialog id="workbench" class="hud dialog bench" aria-labelledby="bench-title">
+    <div class="bench-head">
+      <div><b id="bench-title">作業台</b><small id="bench-meta" class="meta"></small></div>
+      <button id="bench-close" type="button" class="quiet icon" aria-label="閉じる">✕</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-bench="edit" aria-selected="true">編集</button>
+      <button type="button" role="tab" data-bench="calc" aria-selected="false">計算</button>
+    </div>
+    <div id="bench-body" class="bench-body"></div>
+  </dialog>
+  <dialog id="tools" class="hud dialog bench" aria-labelledby="tools-title">
+    <div class="bench-head">
+      <div><b id="tools-title">道具</b><small class="meta">つないだアプリの道具をチャットなしで使う。やったことは会話に残ります</small></div>
+      <button id="tools-close" type="button" class="quiet icon" aria-label="閉じる">✕</button>
+    </div>
+    <div class="bench-body">
+      <label class="bench-field"><span>アプリ</span><select id="tool-app"></select></label>
+      <label class="bench-field"><span>道具</span><select id="tool-name"></select></label>
+      <div id="tool-body" class="bench-form"></div>
+    </div>
+  </dialog>
+  <dialog id="molecules" class="hud dialog bench" aria-labelledby="molecules-title">
+    <div class="bench-head">
+      <div><b id="molecules-title">構造を取り込む</b><small class="meta">結晶は Materials Project から、分子は PubChem から (全方位に真空を空けた箱に入れる)。取り込むと会話に 3D のカードが出て、編集・計算に進めます</small></div>
+      <button id="molecules-close" type="button" class="quiet icon" aria-label="閉じる">✕</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-import="crystal" aria-selected="true">結晶 (Materials Project)</button>
+      <button type="button" role="tab" data-import="molecule" aria-selected="false">分子 (PubChem)</button>
+    </div>
+    <div class="bench-body" id="import-crystal">
+      <form id="crystal-form" class="molecule-search">
+        <input id="crystal-query" type="search" maxlength="100" placeholder="組成式 (TiO2)・元素の組 (Ti-O)・ID (mp-149)" aria-label="組成式・元素の組・ID">
+        <button type="submit" class="primary">探す</button>
+      </form>
+      <small class="meta">OPTIMADE 経由 (API キー不要)。DFT (GGA/GGA+U) で緩和した構造を、安定な順 (凸包からの距離が小さい順) に出します</small>
+      <label class="check-line"><input id="crystal-conventional" type="checkbox" checked> 慣用の単位胞にする <small class="meta">(Materials Project は基本単位胞で返すため)</small></label>
+      <div id="crystal-results" class="molecule-results"></div>
+      <p id="crystal-note" class="notice" aria-live="polite"></p>
+    </div>
+    <div class="bench-body" id="import-molecule" hidden>
+      <form id="molecule-form" class="molecule-search">
+        <input id="molecule-query" type="search" maxlength="300" placeholder="名前 (英語: benzene)・CID・SMILES (CCO)" aria-label="分子の名前・CID・SMILES">
+        <button type="submit" class="primary">探す</button>
+      </form>
+      <label class="bench-field"><span>真空層 (片側)</span><input id="molecule-vacuum" type="number" min="1" max="100" step="any" value="10"><small>Å</small></label>
+      <small class="meta">構造の「編集」の「分子を置く」で、ほかの構造 (表面など) に置けます</small>
+      <div id="molecule-results" class="molecule-results"></div>
+      <p id="molecule-note" class="notice" aria-live="polite"></p>
+    </div>
+  </dialog>
+  <dialog id="imd-dialog" class="hud dialog imd" aria-labelledby="imd-title">
+    <div class="bench-head">
+      <div><b id="imd-title">その場で MD</b><small id="imd-info" class="meta"></small></div>
+      <button id="imd-close" type="button" class="quiet icon" aria-label="閉じる">✕</button>
+    </div>
+    <div id="imd-view" class="imd-view"></div>
+    <p id="imd-status" class="notice imd-status"></p>
+    <div class="imd-controls">
+      <label class="bench-field"><span>ポテンシャル</span><select id="imd-engine"></select></label>
+      <div class="imd-buttons">
+        <button id="imd-cooler" type="button" class="small">−100 K</button>
+        <button id="imd-hotter" type="button" class="small">+100 K</button>
+        <button id="imd-pause" type="button" class="small">一時停止</button>
+        <button id="imd-fix" type="button" class="small">原子を止める</button>
+        <button id="imd-save" type="button" class="small primary">保存</button>
+        <button id="imd-space" type="button" class="small quiet">空間で開く</button>
+        <button id="imd-end" type="button" class="small quiet">終了</button>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="delete-dialog" class="hud dialog">
+    <form method="dialog">
+      <p class="caption">会話を消す</p>
+      <p id="delete-title"></p>
+      <p class="notice">やり取りの記録を消します。ノートと今月の使用量は残ります。</p>
+      <label class="check"><input id="delete-materials" type="checkbox"> この会話の資料も消す</label>
+      <div class="dialog-buttons">
+        <button value="cancel" class="quiet">やめる</button>
+        <button value="delete" class="danger">消す</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+<script src="markdown.js"></script>
+<script src="chart.js"></script>
+<script src="panel.js"></script>
+<script src="files.js"></script>
+<script src="voice.js"></script>
+<script src="periodic.js"></script>
+<script src="workbench.js"></script>
+<script src="toolrun.js"></script>
+<script src="molecules.js"></script>
+<script src="app.js"></script>
+<script type="module" src="structure3d.js"></script>
+<script type="module" src="space.js"></script>
+<script type="module" src="imd2d.js"></script>
+<script type="module" src="place3d.js"></script>
+</body>
+</html>
